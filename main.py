@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 from AlbumCoverFetcher import get_song_album_cover_url
 
-# TODO: log cleaning <-after certain date? certain amount of logs?
+
 load_dotenv()
 
 # Setup logging
@@ -130,6 +130,7 @@ def extract_now_playing(sessions):
 
         title = now_playing.get("Name", "Unknown Media")
 
+        # --- Logic for Audio ---
         if media_type == "Audio":
             title = now_playing.get("Name", "Unknown Track")
             artists = [
@@ -144,6 +145,7 @@ def extract_now_playing(sessions):
             details = title
             state = f"by {', '.join(artists)} from {album}"
 
+        # --- Logic for Movies ---
         elif media_type == "Movie":
             title = now_playing.get("Name", "Unknown Movie")
             year = now_playing.get("ProductionYear")
@@ -152,6 +154,7 @@ def extract_now_playing(sessions):
             details = title
             state = f"{year} • {', '.join(genres)}" if year and genres else "Movie"
 
+        # --- Logic for TV Episodes ---
         elif media_type == "Episode":
             series_name = now_playing.get("SeriesName", "Unknown Series")
             season_number = now_playing.get("ParentIndexNumber")
@@ -166,13 +169,27 @@ def extract_now_playing(sessions):
             details = title
             state = media_type
 
-        album_cover_url = get_album_cover_url(now_playing)
+        # --- IMAGE FETCHING LOGIC ---
+        album_cover_url = default_image_url  # Start with fallback
+        
+        if media_type == "Audio":
+            try:
+                # Use the imported music fetcher
+                artist_query = ", ".join(artists) if artists else "Unknown Artist"
+                fetched_url = get_song_album_cover_url(artist_query, album)
+                if fetched_url:
+                    album_cover_url = fetched_url
+            except Exception as e:
+                logging.error(f"MusicBrainz Error: {e}")
+                # Keep the default if fetcher fails
+        
+        elif media_type in ["Movie", "Episode"]:
+            # Use your local OMDB function
+            album_cover_url = get_album_cover_url(now_playing)
+
         is_paused = play_state.get("IsPaused", False)
         is_muted = play_state.get("IsMuted", False)
         client = session.get("Client", "Unknown Client")
-        if media_type == "Audio":
-            album_cover_url = get_song_album_cover_url("".join(artists), album)
-            print(album_cover_url)
 
         media_info = {
             "Type": media_type,
@@ -190,6 +207,7 @@ def extract_now_playing(sessions):
             "ExternalUrls": now_playing.get("ExternalUrls", []),
         }
 
+        # Update metadata based on type
         if media_type == "Audio":
             media_info.update({"Artists": artists, "Album": album})
         elif media_type == "Movie":
