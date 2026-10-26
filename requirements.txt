@@ -1,4 +1,4 @@
-certifi==2024.7.4
+certifi==2026.10.23
 charset-normalizer==3.3.2
 idna==3.7
 pypresence @ git+https://github.com/qwertyquerty/pypresence.git@f856ccaaeb2321f64f9692b75dc3ceda5c927f42
