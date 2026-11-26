@@ -23,7 +23,10 @@ jellyfin_url = os.getenv("JELLYFIN_URL")
 api_key = os.getenv("JELLYFIN_API_KEY")
 user_id = os.getenv("JELLYFIN_USER_ID")
 omdb_api_key = os.getenv("OMDB_API_KEY")
-headers = {"X-Emby-Token": api_key, "Content-Type": "application/json"}
+headers = {
+    "Authorization": f'MediaBrowser Token="{api_key}"', 
+    "Accept": "application/json",
+}
 
 # Discord setup
 client_id = os.getenv("DISCORD_CLIENT_ID")
